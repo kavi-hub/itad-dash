@@ -1,0 +1,38 @@
+# Environment and secrets
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+
+# Dependencies and build output
+node_modules/
+dist/
+build/
+coverage/
+.next/
+
+# Local tooling
+.DS_Store
+.idea/
+.vscode/
+
+# Live operational evidence: never commit
+*.xlsx
+*.xls
+*.csv
+*.pdf
+*.doc
+*.docx
+*.dotx
+*.zip
+evidence/
+uploads/
+exports/
+client-data/
+raw-data/
+
+# Sanitised fixtures are opt-in and must use explicit extensions
+!samples/anonymised/**/*.fixture.csv
+!samples/anonymised/**/*.fixture.json
+
