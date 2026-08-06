@@ -2,17 +2,17 @@
 
 ITAD Dash is an operations, evidence-management and client-reporting portal for Bulk GSM's IT Asset Disposition workflow.
 
-It is designed to turn collection records, device inventories, Securaze processing results and downstream recycling evidence into a clear, controlled audit trail and a simple client experience.
+It turns collection records, device inventories, Securaze processing results and downstream recycling evidence into a controlled audit trail and a clear client experience.
 
 ## Product purpose
 
 ITAD Dash supports the journey from initial client estimate through receipt, testing, secure erasure, exception handling, recycling confirmation and publication of the completed job pack.
 
-The system must preserve precise operational evidence internally while presenting clients with clear summaries, supporting device reports and approved certificates.
+The system preserves precise operational evidence internally while presenting clients with clear summaries, supporting device reports and approved certificates.
 
 ## Core workflow
 
-1. Record the client's estimated equipment quantities.
+1. Record estimated equipment quantities.
 2. Confirm receipt and complete the working inventory.
 3. Import and validate Securaze processing data.
 4. Match devices, storage media and source reports.
@@ -33,65 +33,51 @@ The system must preserve precise operational evidence internally while presentin
 - Downstream processors are selected per batch from a controlled processor register.
 - Client-facing language prioritises secure erasure and responsible recycling.
 - Corrections create new versions while preserving the original audit history.
-- Client information and real processing evidence must not be committed to this repository.
+- Client information and real processing evidence must not be committed here.
 
 ## Initial product scope
 
 - Job and collection management
 - Canonical asset and storage register
 - Securaze workbook import and schema-change detection
-- Device and report matching
+- Device, storage and report matching
 - Exception handling
-- Client-facing job summaries
-- Searchable device-level results
-- Source-report viewing and controlled downloads
+- Client-facing job summaries and device-level results
+- Controlled source-report viewing and downloads
 - Recycling and destruction-batch management
 - Downstream processor register
 - Certificate generation and reconciliation
-- Roles, permissions and approval gates
-- Notifications, delivery history and audit logs
+- Roles, permissions, approval gates and audit logs
 
 ## Repository structure
 
 ```text
-docs/
-  constitution/
-  requirements/
-  workflows/
-  data-model/
-  integrations/
-  decisions/
-design/
-  wireframes/
-  prototypes/
-  report-layouts/
-samples/
-  anonymised/
-src/
-tests/
+docs/       Product truth, requirements, integrations and decisions
+design/     Sanitised prototypes, wireframes and report layouts
+samples/    Synthetic or deliberately anonymised fixtures only
+src/        Application source
+tests/      Automated validation
 ```
 
-Only anonymised and deliberately sanitised sample data belongs in `samples/`. Raw Securaze exports, client inventories, Certificates of Destruction, Waste Transfer Notes and other live evidence must remain in approved protected storage.
+Raw Securaze exports, client inventories, Certificates of Destruction, Waste Transfer Notes and other live evidence remain in approved protected storage.
 
 ## Current status
 
-The operational workflow and constitutional truth model have completed an adversarial review and are frozen at version 1.1.
+The operational workflow and constitutional truth model completed adversarial review and are frozen at version 1.1. Repository privacy safeguards, the sanitised reference prototype, Securaze import contract and first milestone acceptance criteria are now defined.
 
-The next build stage is:
+The first build milestone is:
 
-> Securaze import → matching preview → exception handling → client summary → supporting device reports
+> Upload workbook → validate structure → preview import → resolve exceptions → generate client summary
 
 ## Near-term roadmap
 
-1. Add the v1.1 constitutional specification.
-2. Add the current prototype and design references.
-3. Formalise the canonical job, asset, storage and evidence data model.
-4. Specify the Securaze import contract and structural-change alerts.
-5. Build the import and matching preview.
-6. Build the client summary and device-report experience.
+1. Formalise the canonical job, asset, storage and evidence data model.
+2. Create synthetic Securaze fixtures for the import contract.
+3. Select the minimum technical architecture needed for the vertical slice.
+4. Build schema fingerprinting and staged import.
+5. Build matching preview and exception handling.
+6. Build the draft client summary and device-report experience.
 7. Add recycling batches, downstream reconciliation and certificate publication.
 8. Validate the workflow against adversarial acceptance tests.
-
-## Status
 
 Private product repository. Early specification and prototyping stage.
