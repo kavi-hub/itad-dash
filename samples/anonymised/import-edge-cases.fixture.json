@@ -1,0 +1,133 @@
+{
+  "fixture_version": "0.1",
+  "synthetic": true,
+  "scenarios": [
+    {
+      "name": "additive_optional_column",
+      "mutation": {
+        "sheet": "PCProduct",
+        "add_column": "synthetic_note",
+        "value": "demo"
+      },
+      "expected": {
+        "notice": "informational_schema_change",
+        "quarantined_rows": 0,
+        "confirmation_allowed": true
+      }
+    },
+    {
+      "name": "renamed_required_column",
+      "mutation": {
+        "sheet": "StorageProduct",
+        "rename": {
+          "storage_serial": "media_identifier"
+        }
+      },
+      "expected": {
+        "exception": "required_field_missing",
+        "blocking_scope": "StorageProduct",
+        "confirmation_allowed": false
+      }
+    },
+    {
+      "name": "unknown_status",
+      "mutation": {
+        "sheet": "StorageProduct",
+        "row": "SYN-ST-002",
+        "set": {
+          "erasure_status": "mystery_complete"
+        }
+      },
+      "expected": {
+        "exception": "unknown_controlled_outcome",
+        "quarantined_rows": 1,
+        "normalised_outcome": "unknown_blocking",
+        "confirmation_allowed_for_unaffected_rows": true
+      }
+    },
+    {
+      "name": "duplicate_source_checksum",
+      "mutation": {
+        "reimport_fixture": "recognised-structure.fixture.json"
+      },
+      "expected": {
+        "new_committed_imports": 0,
+        "exception": "duplicate_import"
+      }
+    },
+    {
+      "name": "duplicate_serial",
+      "mutation": {
+        "sheet": "PCProduct",
+        "add_row": {
+          "source_record_id": "SYN-PC-003",
+          "device_serial": "DEMO-DEVICE-001",
+          "manufacturer": "Fictional Computing",
+          "model": "Model Three",
+          "processing_status": "diagnosed",
+          "completed_at": "2026-01-15T10:10:00Z"
+        }
+      },
+      "expected": {
+        "exception": "ambiguous_device_identity",
+        "quarantined_rows": 2
+      }
+    },
+    {
+      "name": "storage_without_host",
+      "mutation": {
+        "sheet": "StorageProduct",
+        "row": "SYN-ST-001",
+        "confirm_field_absent": "host_source_record_id"
+      },
+      "expected": {
+        "storage_preserved": true,
+        "exception": "host_relationship_unresolved",
+        "invented_host": false,
+        "confirmation_allowed_for_storage": true
+      }
+    },
+    {
+      "name": "host_without_storage",
+      "mutation": {
+        "sheet": "StorageProduct",
+        "remove_row": "SYN-ST-002"
+      },
+      "expected": {
+        "assets_staged": 2,
+        "storage_media_staged": 1,
+        "invented_storage": false
+      }
+    },
+    {
+      "name": "missing_report",
+      "mutation": {
+        "sheet": "StorageProduct",
+        "row": "SYN-ST-001",
+        "remove": [
+          "report_reference"
+        ]
+      },
+      "expected": {
+        "technical_outcome": "successful",
+        "exception": "evidence_missing",
+        "outcome_rewritten": false
+      }
+    },
+    {
+      "name": "mixed_valid_and_quarantined",
+      "mutation": {
+        "sheet": "StorageProduct",
+        "row": "SYN-ST-002",
+        "set": {
+          "erasure_status": "unrecognised_value"
+        }
+      },
+      "expected": {
+        "valid_rows_ready": 3,
+        "quarantined_rows": 1,
+        "unaffected_rows_may_continue": true
+      }
+    }
+  ]
+}
