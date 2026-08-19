@@ -1,12 +1,30 @@
 import { useEffect, useState, type FormEvent } from "react";
 import type { User } from "@supabase/supabase-js";
 import { supabase } from "./lib/supabase";
+import { inspectWorkbook, type SheetInspection } from "./lib/inspectWorkbook";
 import { buildStoragePath, sha256Hex, validateWorkbook } from "./lib/upload";
 
 type Membership = {
   organisation_id: string;
   role: "operator" | "manager" | "client_viewer";
   organisations: { display_name: string } | null;
+};
+
+type StoredUpload = {
+  id: string;
+  original_filename: string;
+  storage_path: string;
+  byte_size: number;
+  sha256: string;
+  created_at: string;
+};
+
+type InspectionRecord = {
+  id: string;
+  source_upload_id: string;
+  sheets: SheetInspection[];
+  warnings: string[];
+  created_at: string;
 };
 
 export function App() {
@@ -59,6 +77,7 @@ function SignIn() {
 function Workspace({ user }: { user: User }) {
   const [membership, setMembership] = useState<Membership | null>(null);
   const [membershipError, setMembershipError] = useState<string | null>(null);
+  const [evidenceRevision, setEvidenceRevision] = useState(0);
 
   useEffect(() => {
     void supabase.from("organisation_memberships")
@@ -80,14 +99,17 @@ function Workspace({ user }: { user: User }) {
       <button className="quiet" onClick={() => void supabase.auth.signOut()}>Sign out</button>
     </header>
     <section className="hero">
-      <div><span className="eyebrow">Slice A</span><h1>Secure source upload</h1><p>Store a synthetic Securaze workbook for staged processing. Nothing is imported yet.</p></div>
-      <div className="trust"><strong>Private by design</strong><span>Organisation-scoped storage</span><span>Immutable source record</span><span>No browser secrets</span></div>
+      <div><span className="eyebrow">Slices A + B</span><h1>Secure source inspection</h1><p>Store a workbook, then inspect its sheets and headers without importing operational rows.</p></div>
+      <div className="trust"><strong>Private by design</strong><span>Organisation-scoped storage</span><span>Immutable source record</span><span>Structure only, no row import</span></div>
     </section>
-    {membershipError ? <section className="panel warning" role="alert">{membershipError}</section> : membership ? <UploadCard user={user} membership={membership} /> : <p>Loading organisation access…</p>}
+    {membershipError ? <section className="panel warning" role="alert">{membershipError}</section> : membership ? <>
+      <UploadCard user={user} membership={membership} onStored={() => setEvidenceRevision((value) => value + 1)} />
+      <EvidenceList user={user} membership={membership} revision={evidenceRevision} />
+    </> : <p>Loading organisation access…</p>}
   </main>;
 }
 
-function UploadCard({ user, membership }: { user: User; membership: Membership }) {
+function UploadCard({ user, membership, onStored }: { user: User; membership: Membership; onStored: () => void }) {
   const [file, setFile] = useState<File | null>(null);
   const [status, setStatus] = useState<string | null>(null);
   const [uploading, setUploading] = useState(false);
@@ -129,6 +151,7 @@ function UploadCard({ user, membership }: { user: User; membership: Membership }
       if (recordError) return setStatus(`File stored; upload record ${uploadId} needs reconciliation: ${recordError.message}`);
       setStatus("Workbook stored securely and ready for schema inspection.");
       setFile(null);
+      onStored();
     } catch (error) {
       setStatus(error instanceof Error ? error.message : "The secure upload could not be completed.");
     } finally {
@@ -144,6 +167,96 @@ function UploadCard({ user, membership }: { user: User; membership: Membership }
     </label>
     {!canUpload && <p role="alert" className="warning">Your role can view evidence but cannot upload it.</p>}
     <button onClick={() => void upload()} disabled={!file || !canUpload || uploading}>{uploading ? "Storing workbook…" : "Store workbook securely"}</button>
+    {status && <p role="status" className="status">{status}</p>}
+  </section>;
+}
+
+function EvidenceList({ user, membership, revision }: { user: User; membership: Membership; revision: number }) {
+  const [uploads, setUploads] = useState<StoredUpload[]>([]);
+  const [inspections, setInspections] = useState<Record<string, InspectionRecord>>({});
+  const [status, setStatus] = useState<string | null>(null);
+  const [busyId, setBusyId] = useState<string | null>(null);
+  const canInspect = membership.role === "operator" || membership.role === "manager";
+
+  useEffect(() => {
+    let active = true;
+    void Promise.all([
+      supabase.from("source_uploads")
+        .select("id, original_filename, storage_path, byte_size, sha256, created_at")
+        .eq("organisation_id", membership.organisation_id)
+        .order("created_at", { ascending: false }),
+      supabase.from("workbook_inspections")
+        .select("id, source_upload_id, sheets, warnings, created_at")
+        .eq("organisation_id", membership.organisation_id),
+    ]).then(([uploadResult, inspectionResult]) => {
+      if (!active) return;
+      if (uploadResult.error) return setStatus(uploadResult.error.message);
+      if (inspectionResult.error) return setStatus(inspectionResult.error.message);
+      setUploads((uploadResult.data ?? []) as StoredUpload[]);
+      setInspections(Object.fromEntries(((inspectionResult.data ?? []) as unknown as InspectionRecord[])
+        .map((inspection) => [inspection.source_upload_id, inspection])));
+    });
+    return () => { active = false; };
+  }, [membership.organisation_id, revision]);
+
+  async function inspect(upload: StoredUpload) {
+    if (!canInspect || busyId) return;
+    setBusyId(upload.id);
+    setStatus("Downloading the private source for local structural inspection…");
+    try {
+      const { data: source, error: downloadError } = await supabase.storage
+        .from("itad-source-files")
+        .download(upload.storage_path);
+      if (downloadError) return setStatus(downloadError.message);
+      const result = inspectWorkbook(await source.arrayBuffer());
+      const { data, error } = await supabase.from("workbook_inspections").insert({
+        source_upload_id: upload.id,
+        organisation_id: membership.organisation_id,
+        inspected_by: user.id,
+        inspector_version: "slice-b-v1",
+        sheets: result.sheets,
+        warnings: result.warnings,
+      }).select("id, source_upload_id, sheets, warnings, created_at").single();
+      if (error) return setStatus(error.message);
+      const inspection = data as unknown as InspectionRecord;
+      setInspections((current) => ({ ...current, [upload.id]: inspection }));
+      setStatus("Workbook structure recorded. No operational rows were imported.");
+    } catch (error) {
+      setStatus(error instanceof Error ? error.message : "The workbook could not be inspected safely.");
+    } finally {
+      setBusyId(null);
+    }
+  }
+
+  return <section className="panel evidence-list">
+    <div className="section-heading">
+      <div><span className="eyebrow">Structural inspection</span><h2>Stored source evidence</h2></div>
+      <span className="privacy-chip">No row import</span>
+    </div>
+    {uploads.length === 0 ? <p className="muted">No source workbooks are stored yet.</p> : uploads.map((upload) => {
+      const inspection = inspections[upload.id];
+      return <article className="evidence-item" key={upload.id}>
+        <div className="evidence-summary">
+          <div><strong>{upload.original_filename}</strong><span>{upload.byte_size.toLocaleString()} bytes · {new Date(upload.created_at).toLocaleString()}</span></div>
+          {inspection
+            ? <span className="complete-badge">Inspected</span>
+            : <button onClick={() => void inspect(upload)} disabled={!canInspect || busyId !== null}>
+              {busyId === upload.id ? "Inspecting…" : "Inspect structure"}
+            </button>}
+        </div>
+        {inspection && <div className="sheet-grid">
+          {inspection.sheets.map((sheet) => <div className="sheet-card" key={sheet.name}>
+            <strong>{sheet.name}</strong>
+            <span>{sheet.rowCount.toLocaleString()} rows · {sheet.columnCount.toLocaleString()} columns</span>
+            <span>Header candidate: {sheet.headerRow ? "row " + sheet.headerRow : "not found"}</span>
+            {sheet.headers.length > 0 && <div className="header-list">{sheet.headers.map((header, index) =>
+              header ? <code key={index}>{header}</code> : null)}</div>}
+          </div>)}
+          {inspection.warnings.length > 0 && <ul className="inspection-warnings">{inspection.warnings.map((warning) => <li key={warning}>{warning}</li>)}</ul>}
+        </div>}
+      </article>;
+    })}
+    {!canInspect && <p className="warning">Your role can view source records but cannot inspect raw workbooks.</p>}
     {status && <p role="status" className="status">{status}</p>}
   </section>;
 }
