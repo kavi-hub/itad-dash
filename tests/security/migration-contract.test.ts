@@ -19,6 +19,7 @@ describe("Slice A migration security contract", () => {
   });
   it("binds upload records to their organisation and upload identifiers", () => {
     expect(sql).toContain("storage_path like organisation_id::text || '/' || id::text || '/%'");
+    expect(sql).toContain("original_filename ~* '[.]xlsx$'");
   });
   it("does not grant anonymous application access", () => {
     expect(sql).not.toMatch(/grant\s+(select|insert|update|delete)[^;]+to\s+anon/i);
@@ -29,5 +30,9 @@ describe("Slice A migration security contract", () => {
   it("requires active operator or manager membership for upload", () => {
     expect(sql).toContain("m.role in ('operator', 'manager')");
     expect(sql).toContain("m.status = 'active'");
+  });
+  it("limits raw source-file access to operational roles", () => {
+    const readPolicy = sql.match(/create policy "members read organisation source files"[\s\S]*?\n\);/)?.[0];
+    expect(readPolicy).toContain("m.role in ('operator', 'manager')");
   });
 });
