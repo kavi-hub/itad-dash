@@ -69,12 +69,12 @@ export function SignIn() {
     if (error) return setStatus(error.message);
     setEmail(normalizedEmail);
     setSentTo(normalizedEmail);
-    setStatus("Check your email. Use the secure link or enter the six-digit code below.");
+    setStatus("Check your email. Use the secure link or enter the one-time code below.");
   }
 
   async function verifyCode(event: FormEvent) {
     event.preventDefault();
-    if (!sentTo || busy || !/^\d{6}$/.test(code)) return;
+    if (!sentTo || busy || !/^\d{6,8}$/.test(code)) return;
     setBusy(true);
     setStatus("Checking your one-time code…");
     const { error } = await supabase.auth.verifyOtp({
@@ -97,9 +97,9 @@ export function SignIn() {
         <button type="submit" disabled={busy}>{busy ? "Sending…" : "Email my sign-in options"}</button>
       </form> : <>
         <form onSubmit={verifyCode}>
-          <label htmlFor="code">Six-digit email code</label>
-          <input id="code" className="code-input" inputMode="numeric" autoComplete="one-time-code" pattern="[0-9]{6}" maxLength={6} value={code} onChange={(event) => setCode(event.target.value.replace(/\D/g, "").slice(0, 6))} required disabled={busy} />
-          <button type="submit" disabled={busy || code.length !== 6}>{busy ? "Checking…" : "Sign in with code"}</button>
+          <label htmlFor="code">Email one-time code</label>
+          <input id="code" className="code-input" inputMode="numeric" autoComplete="one-time-code" pattern="[0-9]{6,8}" minLength={6} maxLength={8} value={code} onChange={(event) => setCode(event.target.value.replace(/\D/g, "").slice(0, 8))} required disabled={busy} />
+          <button type="submit" disabled={busy || code.length < 6}>{busy ? "Checking…" : "Sign in with code"}</button>
         </form>
         <button className="text-button" type="button" onClick={() => { setSentTo(null); setCode(""); setStatus(null); }}>Use a different email</button>
       </>}
