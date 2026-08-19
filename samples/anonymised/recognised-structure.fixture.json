@@ -28,7 +28,6 @@
         {
           "source_record_id": "SYN-ST-001",
           "storage_serial": "DEMO-STORAGE-001",
-          "host_source_record_id": "SYN-PC-001",
           "erasure_status": "successful",
           "erasure_method": "synthetic-clear",
           "completed_at": "2026-01-15T10:03:00Z",
@@ -37,7 +36,6 @@
         {
           "source_record_id": "SYN-ST-002",
           "storage_serial": "DEMO-STORAGE-002",
-          "host_source_record_id": "SYN-PC-002",
           "erasure_status": "failed",
           "erasure_method": "synthetic-clear",
           "completed_at": "2026-01-15T10:08:00Z",
@@ -50,11 +48,12 @@
     "schema_finding": "recognised",
     "assets_staged": 2,
     "storage_media_staged": 2,
-    "exceptions": 0,
+    "exceptions": 2,
     "confirmation_allowed": true,
     "client_outcomes": {
       "securely_erased": 1,
       "recycling_required": 1
-    }
+    },
+    "unresolved_host_links": 2
   }
 }
