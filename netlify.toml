@@ -1,10 +1,12 @@
-# Supabase browser configuration is supplied through Netlify build environment variables.
+# These Supabase values are intentionally browser-public. Never add a secret or service-role key here.
 [build]
   command = "npm run build"
   publish = "dist"
 
 [build.environment]
   NODE_VERSION = "22"
+  VITE_SUPABASE_URL = "https://sznrjzpzfrihysatmrom.supabase.co"
+  VITE_SUPABASE_PUBLISHABLE_KEY = "sb_publishable_QApCSoy7zYxmWT9544a2nQ_k6iOdEtD"
 
 [[redirects]]
   from = "/*"
