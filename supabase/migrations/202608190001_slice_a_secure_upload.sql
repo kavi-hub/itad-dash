@@ -33,6 +33,12 @@ create table public.source_uploads (
   unique (organisation_id, sha256)
 );
 
+create index organisation_memberships_user_id_idx
+on public.organisation_memberships (user_id);
+
+create index source_uploads_uploaded_by_idx
+on public.source_uploads (uploaded_by);
+
 revoke all on public.organisations, public.organisation_memberships, public.source_uploads from anon, authenticated;
 grant select on public.organisations, public.organisation_memberships to authenticated;
 grant select, insert on public.source_uploads to authenticated;
