@@ -25,20 +25,20 @@ describe("passwordless sign in", () => {
       email: "test@bulkgsm.com",
       options: { emailRedirectTo: window.location.origin, shouldCreateUser: false },
     }));
-    expect(await screen.findByLabelText("Six-digit email code")).toBeInTheDocument();
+    expect(await screen.findByLabelText("Email one-time code")).toBeInTheDocument();
   });
 
-  it("verifies a six-digit email OTP", async () => {
+  it("verifies the configured eight-digit email OTP", async () => {
     render(<SignIn />);
     fireEvent.change(screen.getByLabelText("Work email"), { target: { value: "test@bulkgsm.com" } });
     fireEvent.click(screen.getByRole("button", { name: "Email my sign-in options" }));
-    const code = await screen.findByLabelText("Six-digit email code");
-    fireEvent.change(code, { target: { value: "123456" } });
+    const code = await screen.findByLabelText("Email one-time code");
+    fireEvent.change(code, { target: { value: "12345678" } });
     fireEvent.click(screen.getByRole("button", { name: "Sign in with code" }));
 
     await waitFor(() => expect(verifyOtp).toHaveBeenCalledWith({
       email: "test@bulkgsm.com",
-      token: "123456",
+      token: "12345678",
       type: "email",
     }));
   });
