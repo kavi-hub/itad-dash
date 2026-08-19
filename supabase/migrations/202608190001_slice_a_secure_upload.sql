@@ -63,7 +63,7 @@ create policy "operators record own uploads"
 on public.source_uploads for insert to authenticated
 with check (
   uploaded_by = (select auth.uid())
-  and storage_path like organisation_id::text || '/%'
+  and storage_path like organisation_id::text || '/' || id::text || '/%'
   and exists (
     select 1 from public.organisation_memberships m
     where m.organisation_id = source_uploads.organisation_id
@@ -102,6 +102,8 @@ create policy "operators upload immutable source files"
 on storage.objects for insert to authenticated
 with check (
   bucket_id = 'itad-source-files'
+  and storage.extension(name) = 'xlsx'
+  and array_length(storage.foldername(name), 1) = 2
   and owner_id = (select auth.uid()::text)
   and exists (
     select 1 from public.organisation_memberships m
