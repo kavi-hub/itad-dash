@@ -19,6 +19,12 @@ describe("Slice B migration security contract", () => {
   it("keeps inspections immutable in the browser", () => {
     expect(sql).not.toMatch(/for (update|delete) to authenticated/i);
   });
+  it("constrains persisted JSON to structural metadata", () => {
+    expect(sql).toContain("is_valid_workbook_inspection");
+    expect(sql).toContain("workbook_inspections_structural_metadata_only");
+    expect(sql).toContain("sheet - array['name', 'rowCount', 'columnCount', 'headerRow', 'headers']");
+    expect(sql).toContain("jsonb_array_length(sheet->'headers') > 100");
+  });
   it("stores structure but defines no imported-row table", () => {
     expect(sql).toContain("sheets jsonb");
     expect(sql).not.toMatch(/create table public\.(assets|devices|imported_rows)/i);
