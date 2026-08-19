@@ -45,18 +45,45 @@ export function App() {
   return <Workspace user={user} />;
 }
 
-function SignIn() {
+export function SignIn() {
   const [email, setEmail] = useState("");
+  const [code, setCode] = useState("");
+  const [sentTo, setSentTo] = useState<string | null>(null);
   const [status, setStatus] = useState<string | null>(null);
+  const [busy, setBusy] = useState(false);
 
-  async function submit(event: FormEvent) {
+  async function requestAccess(event: FormEvent) {
     event.preventDefault();
-    setStatus("Sending secure sign-in link…");
+    if (busy) return;
+    const normalizedEmail = email.trim().toLowerCase();
+    setBusy(true);
+    setStatus("Sending your secure sign-in options…");
     const { error } = await supabase.auth.signInWithOtp({
-      email,
-      options: { emailRedirectTo: window.location.origin },
+      email: normalizedEmail,
+      options: {
+        emailRedirectTo: window.location.origin,
+        shouldCreateUser: false,
+      },
     });
-    setStatus(error ? error.message : "Check your email for the secure sign-in link.");
+    setBusy(false);
+    if (error) return setStatus(error.message);
+    setEmail(normalizedEmail);
+    setSentTo(normalizedEmail);
+    setStatus("Check your email. Use the secure link or enter the six-digit code below.");
+  }
+
+  async function verifyCode(event: FormEvent) {
+    event.preventDefault();
+    if (!sentTo || busy || !/^\d{6}$/.test(code)) return;
+    setBusy(true);
+    setStatus("Checking your one-time code…");
+    const { error } = await supabase.auth.verifyOtp({
+      email: sentTo,
+      token: code,
+      type: "email",
+    });
+    setBusy(false);
+    if (error) setStatus(error.message);
   }
 
   return <main className="center">
@@ -64,11 +91,18 @@ function SignIn() {
       <span className="eyebrow">Bulk GSM operations</span>
       <h1>ITAD Dash</h1>
       <p className="muted">Secure evidence in. Clear outcomes out.</p>
-      <form onSubmit={submit}>
+      {!sentTo ? <form onSubmit={requestAccess}>
         <label htmlFor="email">Work email</label>
-        <input id="email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} required autoComplete="email" />
-        <button type="submit">Send secure link</button>
-      </form>
+        <input id="email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} required autoComplete="email" disabled={busy} />
+        <button type="submit" disabled={busy}>{busy ? "Sending…" : "Email my sign-in options"}</button>
+      </form> : <>
+        <form onSubmit={verifyCode}>
+          <label htmlFor="code">Six-digit email code</label>
+          <input id="code" className="code-input" inputMode="numeric" autoComplete="one-time-code" pattern="[0-9]{6}" maxLength={6} value={code} onChange={(event) => setCode(event.target.value.replace(/\D/g, "").slice(0, 6))} required disabled={busy} />
+          <button type="submit" disabled={busy || code.length !== 6}>{busy ? "Checking…" : "Sign in with code"}</button>
+        </form>
+        <button className="text-button" type="button" onClick={() => { setSentTo(null); setCode(""); setStatus(null); }}>Use a different email</button>
+      </>}
       {status && <p role="status" className="status">{status}</p>}
     </section>
   </main>;
