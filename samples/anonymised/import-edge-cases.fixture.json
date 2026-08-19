@@ -78,14 +78,13 @@
       "mutation": {
         "sheet": "StorageProduct",
         "row": "SYN-ST-001",
-        "set": {
-          "host_source_record_id": "SYN-PC-MISSING"
-        }
+        "confirm_field_absent": "host_source_record_id"
       },
       "expected": {
         "storage_preserved": true,
-        "exception": "host_not_found",
-        "invented_host": false
+        "exception": "host_relationship_unresolved",
+        "invented_host": false,
+        "confirmation_allowed_for_storage": true
       }
     },
     {
