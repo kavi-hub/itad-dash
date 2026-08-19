@@ -14,7 +14,7 @@ as $$
       select 1
       from jsonb_array_elements(payload) as item(sheet)
       where jsonb_typeof(sheet) is distinct from 'object'
-        or jsonb_object_length(sheet) <> 5
+        or not (sheet ?& array['name', 'rowCount', 'columnCount', 'headerRow', 'headers'])
         or sheet - array['name', 'rowCount', 'columnCount', 'headerRow', 'headers'] <> '{}'::jsonb
         or jsonb_typeof(sheet->'name') is distinct from 'string'
         or length(sheet->>'name') not between 1 and 160
