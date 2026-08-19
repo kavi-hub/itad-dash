@@ -14,6 +14,11 @@ describe("Slice A migration security contract", () => {
   it("uses a private bucket and organisation-first paths", () => {
     expect(sql).toMatch(/'itad-source-files'[\s\S]*false/);
     expect(sql).toContain("(storage.foldername(name))[1]");
+    expect(sql).toContain("storage.extension(name) = 'xlsx'");
+    expect(sql).toContain("array_length(storage.foldername(name), 1) = 2");
+  });
+  it("binds upload records to their organisation and upload identifiers", () => {
+    expect(sql).toContain("storage_path like organisation_id::text || '/' || id::text || '/%'");
   });
   it("does not grant anonymous application access", () => {
     expect(sql).not.toMatch(/grant\s+(select|insert|update|delete)[^;]+to\s+anon/i);
