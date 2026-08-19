@@ -23,7 +23,7 @@ create table public.source_uploads (
   id uuid primary key,
   organisation_id uuid not null references public.organisations(id) on delete restrict,
   uploaded_by uuid not null references auth.users(id) on delete restrict,
-  original_filename text not null check (original_filename ~* '\\.xlsx$'),
+  original_filename text not null check (original_filename ~* '[.]xlsx$'),
   storage_path text not null unique,
   byte_size bigint not null check (byte_size > 0 and byte_size <= 20971520),
   mime_type text,
@@ -95,6 +95,7 @@ using (
     where m.organisation_id::text = (storage.foldername(name))[1]
       and m.user_id = (select auth.uid())
       and m.status = 'active'
+      and m.role in ('operator', 'manager')
   )
 );
 
