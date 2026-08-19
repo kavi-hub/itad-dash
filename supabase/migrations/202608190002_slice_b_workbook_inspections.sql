@@ -13,9 +13,10 @@ as $$
     and not exists (
       select 1
       from jsonb_array_elements(payload) as item(sheet)
-      where jsonb_typeof(sheet) <> 'object'
+      where jsonb_typeof(sheet) is distinct from 'object'
+        or jsonb_object_length(sheet) <> 5
         or sheet - array['name', 'rowCount', 'columnCount', 'headerRow', 'headers'] <> '{}'::jsonb
-        or jsonb_typeof(sheet->'name') <> 'string'
+        or jsonb_typeof(sheet->'name') is distinct from 'string'
         or length(sheet->>'name') not between 1 and 160
         or coalesce(sheet->>'rowCount', '') !~ '^[0-9]{1,6}$'
         or (sheet->>'rowCount')::integer not between 0 and 200000
@@ -28,18 +29,18 @@ as $$
             and (sheet->>'headerRow')::integer between 1 and 200000
           )
         )
-        or jsonb_typeof(sheet->'headers') <> 'array'
+        or jsonb_typeof(sheet->'headers') is distinct from 'array'
         or jsonb_array_length(sheet->'headers') > 100
         or exists (
           select 1 from jsonb_array_elements(sheet->'headers') as header(value)
-          where jsonb_typeof(value) <> 'string' or length(value #>> '{}') > 160
+          where jsonb_typeof(value) is distinct from 'string' or length(value #>> '{}') > 160
         )
     )
     and jsonb_typeof(warning_list) = 'array'
     and jsonb_array_length(warning_list) <= 100
     and not exists (
       select 1 from jsonb_array_elements(warning_list) as warning(value)
-      where jsonb_typeof(value) <> 'string' or length(value #>> '{}') > 300
+      where jsonb_typeof(value) is distinct from 'string' or length(value #>> '{}') > 300
     );
 $$;
 
