@@ -36,3 +36,6 @@ raw-data/
 !samples/anonymised/**/*.fixture.csv
 !samples/anonymised/**/*.fixture.json
 
+
+# TypeScript incremental build metadata
+*.tsbuildinfo
