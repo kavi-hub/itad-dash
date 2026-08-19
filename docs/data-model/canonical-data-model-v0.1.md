@@ -92,7 +92,7 @@ Key fields:
 - `data_risk_status`
 - `physical_disposition`
 
-A host may have zero, one or many storage media. A storage medium may temporarily have no resolved host.
+A host may have zero, one or many storage media. A storage medium may have no resolved host. The representative Securaze export provides no deterministic host-to-storage key, so row position, timestamps, make/model similarity and coincidental ordering must never create this relationship.
 
 ### Processing attempt
 
@@ -291,7 +291,7 @@ Unknown or quarantined outcomes never appear as successful.
 ## Invariants
 
 1. Every asset and storage medium belongs to exactly one job.
-2. A storage medium cannot belong to an asset from another job.
+2. A storage medium cannot belong to an asset from another job. An absent host relationship is valid staged truth and must remain explicit until deterministically resolved.
 3. A processing attempt targets exactly one asset or storage medium.
 4. A committed import is immutable.
 5. The same source checksum and mapping version cannot create a second committed import.
