@@ -18,5 +18,5 @@ describe("storage paths", () => {
     expect(path).toBe("11111111-1111-4111-8111-111111111111/22222222-2222-4222-8222-222222222222/Demo-Client-final.xlsx");
   });
   it("rejects unscoped identifiers", () => expect(() => buildStoragePath("client", "upload", "x.xlsx")).toThrow());
-  it("never emits path separators from the filename", () => expect(safeSourceName("../../source.xlsx")).toBe("..-..-source.xlsx"));
+  it("never emits path separators or leading-dot names", () => expect(safeSourceName("../../source.xlsx")).toBe("source.xlsx"));
 });
