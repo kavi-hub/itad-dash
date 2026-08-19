@@ -35,4 +35,8 @@ describe("Slice A migration security contract", () => {
     const readPolicy = sql.match(/create policy "members read organisation source files"[\s\S]*?\n\);/)?.[0];
     expect(readPolicy).toContain("m.role in ('operator', 'manager')");
   });
+  it("indexes user foreign keys used by access and audit queries", () => {
+    expect(sql).toContain("organisation_memberships_user_id_idx");
+    expect(sql).toContain("source_uploads_uploaded_by_idx");
+  });
 });
