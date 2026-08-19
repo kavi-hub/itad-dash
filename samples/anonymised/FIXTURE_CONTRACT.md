@@ -57,15 +57,17 @@ Optional:
 Required logical fields:
 - `source_record_id`
 - `storage_serial`
-- `host_source_record_id`
 - `erasure_status`
 - `completed_at`
 
 Optional:
+- `host_source_record_id` when a future recognised export supplies a deterministic key
 - `media_type`
 - `capacity_bytes`
 - `erasure_method`
 - `report_reference`
 - `report_locator`
 
-Exact upstream headings are mapping-version inputs and will be added only after the real workbook is translated into a non-sensitive field dictionary outside GitHub.
+The representative export does not supply a deterministic relationship between `PCProduct` and `StorageProduct`. Fixtures therefore stage storage independently by default. A fixture may include `host_source_record_id` only to test a future recognised mapping that genuinely supplies that key. Row order is never a relationship key.
+
+Exact upstream headings are mapping-version inputs and are documented only through a non-sensitive field dictionary.
