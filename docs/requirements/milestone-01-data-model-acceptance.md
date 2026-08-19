@@ -17,6 +17,7 @@ The canonical model and fixture contract are ready for implementation-stack sele
 - [x] Every imported canonical value retains row provenance.
 - [x] Unknown controlled values are blocking, never coerced.
 - [x] Row-level quarantine can isolate independently valid rows.
+- [x] Missing host-to-storage linkage remains explicit; row order cannot manufacture a relationship.
 
 ## History and audit
 
@@ -40,9 +41,9 @@ The canonical model and fixture contract are ready for implementation-stack sele
 
 ## Remaining validation before code
 
-1. Translate the real Securaze workbook headings into a non-sensitive field dictionary.
-2. Confirm the exact controlled status values found in the representative export.
-3. Confirm which report locator fields are stable identifiers versus temporary download URLs.
+1. Publish the inspected headings and controlled values through a non-sensitive mapping dictionary.
+2. Treat the `Report` path as a source reference and the API download field as a temporary retrieval locator until preservation succeeds.
+3. Define the operational reconciliation input that can deterministically connect storage media to host assets when required.
 4. Convert the logical JSON fixtures into workbook fixtures during implementation without copying live data.
 5. Select the smallest stack that can test schema fingerprinting, staged import and reconciliation end to end.
 
