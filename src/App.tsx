@@ -90,43 +90,60 @@ function Workspace({ user }: { user: User }) {
 function UploadCard({ user, membership }: { user: User; membership: Membership }) {
   const [file, setFile] = useState<File | null>(null);
   const [status, setStatus] = useState<string | null>(null);
+  const [uploading, setUploading] = useState(false);
   const canUpload = membership.role === "operator" || membership.role === "manager";
 
   async function upload() {
-    if (!file || !canUpload) return;
+    if (!file || !canUpload || uploading) return;
     const validation = validateWorkbook(file);
     if (!validation.ok) return setStatus(validation.message);
-    setStatus("Calculating source checksum…");
-    const uploadId = crypto.randomUUID();
-    const path = buildStoragePath(membership.organisation_id, uploadId, file.name);
-    const checksum = await sha256Hex(file);
-    setStatus("Uploading to private evidence storage…");
-    const { error: storageError } = await supabase.storage.from("itad-source-files").upload(path, file, { contentType: file.type || undefined, upsert: false });
-    if (storageError) return setStatus(storageError.message);
-    const { error: recordError } = await supabase.from("source_uploads").insert({
-      id: uploadId,
-      organisation_id: membership.organisation_id,
-      uploaded_by: user.id,
-      original_filename: file.name,
-      storage_path: path,
-      byte_size: file.size,
-      mime_type: file.type || null,
-      sha256: checksum,
-      status: "stored",
-    });
-    if (recordError) return setStatus(`File stored; upload record needs attention: ${recordError.message}`);
-    setStatus("Workbook stored securely and ready for schema inspection.");
-    setFile(null);
+    setUploading(true);
+    try {
+      setStatus("Calculating source checksum…");
+      const checksum = await sha256Hex(file);
+      const { data: existing, error: lookupError } = await supabase
+        .from("source_uploads")
+        .select("id, status")
+        .eq("organisation_id", membership.organisation_id)
+        .eq("sha256", checksum)
+        .maybeSingle();
+      if (lookupError) return setStatus(lookupError.message);
+      if (existing) return setStatus("This exact workbook is already stored for your organisation.");
+
+      const uploadId = crypto.randomUUID();
+      const path = buildStoragePath(membership.organisation_id, uploadId, file.name);
+      setStatus("Uploading to private evidence storage…");
+      const { error: storageError } = await supabase.storage.from("itad-source-files").upload(path, file, { contentType: file.type || undefined, upsert: false });
+      if (storageError) return setStatus(storageError.message);
+      const { error: recordError } = await supabase.from("source_uploads").insert({
+        id: uploadId,
+        organisation_id: membership.organisation_id,
+        uploaded_by: user.id,
+        original_filename: file.name,
+        storage_path: path,
+        byte_size: file.size,
+        mime_type: file.type || null,
+        sha256: checksum,
+        status: "stored",
+      });
+      if (recordError) return setStatus(`File stored; upload record ${uploadId} needs reconciliation: ${recordError.message}`);
+      setStatus("Workbook stored securely and ready for schema inspection.");
+      setFile(null);
+    } catch (error) {
+      setStatus(error instanceof Error ? error.message : "The secure upload could not be completed.");
+    } finally {
+      setUploading(false);
+    }
   }
 
   return <section className="panel upload-card">
     <div><span className="eyebrow">Source evidence</span><h2>Select a synthetic workbook</h2><p className="muted">Accepted: .xlsx, up to 20 MB. Live client workbooks remain outside development.</p></div>
     <label className="drop-zone">
       <span>{file?.name ?? "Choose workbook"}</span>
-      <input type="file" accept=".xlsx,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" onChange={(e) => setFile(e.target.files?.[0] ?? null)} disabled={!canUpload} />
+      <input type="file" accept=".xlsx,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" onChange={(e) => setFile(e.target.files?.[0] ?? null)} disabled={!canUpload || uploading} />
     </label>
     {!canUpload && <p role="alert" className="warning">Your role can view evidence but cannot upload it.</p>}
-    <button onClick={() => void upload()} disabled={!file || !canUpload}>Store workbook securely</button>
+    <button onClick={() => void upload()} disabled={!file || !canUpload || uploading}>{uploading ? "Storing workbook…" : "Store workbook securely"}</button>
     {status && <p role="status" className="status">{status}</p>}
   </section>;
 }
