@@ -26,7 +26,10 @@ export function validateWorkbook(file: Pick<File, "name" | "size" | "type">): Wo
 }
 
 export function safeSourceName(name: string): string {
-  const stem = name.replace(/\.xlsx$/i, "").replace(/[^a-zA-Z0-9._-]+/g, "-").replace(/^-+|-+$/g, "");
+  const stem = name
+    .replace(/\.xlsx$/i, "")
+    .replace(/[^a-zA-Z0-9._-]+/g, "-")
+    .replace(/^[.-]+|[.-]+$/g, "");
   return `${stem || "securaze-source"}.xlsx`;
 }
 
