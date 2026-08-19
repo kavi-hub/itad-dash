@@ -1,0 +1,60 @@
+{
+  "fixture_version": "0.1",
+  "scenario": "recognised_structure",
+  "synthetic": true,
+  "workbook": {
+    "sheets": {
+      "PCProduct": [
+        {
+          "source_record_id": "SYN-PC-001",
+          "device_serial": "DEMO-DEVICE-001",
+          "manufacturer": "Fictional Computing",
+          "model": "Model One",
+          "processing_status": "diagnosed",
+          "completed_at": "2026-01-15T10:00:00Z",
+          "report_reference": "DEMO-REPORT-PC-001"
+        },
+        {
+          "source_record_id": "SYN-PC-002",
+          "device_serial": "DEMO-DEVICE-002",
+          "manufacturer": "Fictional Computing",
+          "model": "Model Two",
+          "processing_status": "diagnosed",
+          "completed_at": "2026-01-15T10:05:00Z",
+          "report_reference": "DEMO-REPORT-PC-002"
+        }
+      ],
+      "StorageProduct": [
+        {
+          "source_record_id": "SYN-ST-001",
+          "storage_serial": "DEMO-STORAGE-001",
+          "host_source_record_id": "SYN-PC-001",
+          "erasure_status": "successful",
+          "erasure_method": "synthetic-clear",
+          "completed_at": "2026-01-15T10:03:00Z",
+          "report_reference": "DEMO-REPORT-ST-001"
+        },
+        {
+          "source_record_id": "SYN-ST-002",
+          "storage_serial": "DEMO-STORAGE-002",
+          "host_source_record_id": "SYN-PC-002",
+          "erasure_status": "failed",
+          "erasure_method": "synthetic-clear",
+          "completed_at": "2026-01-15T10:08:00Z",
+          "report_reference": "DEMO-REPORT-ST-002"
+        }
+      ]
+    }
+  },
+  "expected": {
+    "schema_finding": "recognised",
+    "assets_staged": 2,
+    "storage_media_staged": 2,
+    "exceptions": 0,
+    "confirmation_allowed": true,
+    "client_outcomes": {
+      "securely_erased": 1,
+      "recycling_required": 1
+    }
+  }
+}
